@@ -91,6 +91,10 @@ npm run test:coverage
 
 Jest + React Native Testing Library, with network mocked by **MSW**.
 
+**Verified: 21 tests across 4 suites.** Coverage is split by seam — `Button` for a reusable
+component, `UsersListScreen` for screen states and navigation, `useUserSearch` for debouncing,
+and `useUsersList` for list-vs-search fetching and pagination against MSW.
+
 Three environment quirks are pinned down in `jest.config.js` and `src/test/mocks/server.ts`:
 
 - **`msw/native`, not `msw/node`.** MSW's export map sets `./node` to `null` under the
