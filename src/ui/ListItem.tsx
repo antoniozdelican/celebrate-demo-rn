@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { colors, spacing } from '@/theme/tokens';
 import { Text } from '@/ui/Text';
@@ -12,6 +12,7 @@ export type ListItemProps = {
   left?: ReactNode;
   right?: ReactNode;
   onPress?: () => void;
+  style?: StyleProp<ViewStyle>;
   testID?: string;
 };
 
@@ -19,14 +20,14 @@ export type ListItemProps = {
  * Composable row. It accepts slots rather than an `avatarUrl` prop so it stays
  * usable for rows that are not people.
  */
-export function ListItem({ title, subtitle, left, right, onPress, testID }: ListItemProps) {
+export function ListItem({ title, subtitle, left, right, onPress, style, testID }: ListItemProps) {
   return (
     <Touchable
       testID={testID}
       onPress={onPress}
       accessibilityRole={onPress ? 'button' : undefined}
       accessibilityLabel={subtitle ? `${title}, ${subtitle}` : title}
-      style={styles.row}
+      style={[styles.row, style]}
     >
       {left ? <View style={styles.left}>{left}</View> : null}
 
