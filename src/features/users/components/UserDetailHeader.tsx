@@ -20,15 +20,23 @@ const BAR_HEIGHT = 44;
 /**
  * The header shrinks rather than empties: at rest a large avatar, name and job
  * title; collapsed, a small avatar and name remain under the bar and only the
- * job title is dropped. These are the measured endpoints of that transition.
+ * job title is dropped. Endpoints measured from the native recording.
  */
 const AVATAR_MAX = 96;
 const AVATAR_MIN = 40;
-const NAME_MAX = typography.largeTitle.fontSize;
+const NAME_LINE_MAX = typography.largeTitle.lineHeight;
 const NAME_MIN = 22;
 const SUBTITLE_HEIGHT = typography.heading.lineHeight;
 
-export const HEADER_MAX_HEIGHT = 256;
+/**
+ * Scale factors, not sizes: the avatar and name are laid out once at full size
+ * and animated with `scale`, so no frame triggers a layout pass or makes
+ * expo-image resample its bitmap.
+ */
+const AVATAR_SCALE_MIN = AVATAR_MIN / AVATAR_MAX;
+const NAME_SCALE_MIN = NAME_MIN / typography.largeTitle.fontSize;
+
+export const HEADER_MAX_HEIGHT = 252;
 export const HEADER_MIN_HEIGHT = 128;
 const COLLAPSE_RANGE = HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT;
 
@@ -73,42 +81,50 @@ export function UserDetailHeader({
       ) + insets.top,
   }));
 
+  /**
+   * `progress` is 0 at rest and 1 fully collapsed. Deriving every style from
+   * it keeps the elements in lockstep.
+   */
   const avatarStyle = useAnimatedStyle(() => {
-    const size = interpolate(
+    const progress = interpolate(
       scrollY.value,
       [0, COLLAPSE_RANGE],
-      [AVATAR_MAX, AVATAR_MIN],
+      [0, 1],
       Extrapolation.CLAMP,
     );
-    return { width: size, height: size };
+    return { transform: [{ scale: 1 - progress * (1 - AVATAR_SCALE_MIN) }] };
   });
 
-  const nameStyle = useAnimatedStyle(() => ({
-    fontSize: interpolate(
+  const nameStyle = useAnimatedStyle(() => {
+    const progress = interpolate(
       scrollY.value,
       [0, COLLAPSE_RANGE],
-      [NAME_MAX, NAME_MIN],
+      [0, 1],
       Extrapolation.CLAMP,
-    ),
-    lineHeight: interpolate(
-      scrollY.value,
-      [0, COLLAPSE_RANGE],
-      [typography.largeTitle.lineHeight, 28],
-      Extrapolation.CLAMP,
-    ),
-  }));
+    );
+    const scale = 1 - progress * (1 - NAME_SCALE_MIN);
+    // Scaling from the top leaves a gap underneath the avatar; translate up by
+    // exactly the height it gave back so the stack stays tight.
+    const avatarFreed = AVATAR_MAX * progress * (1 - AVATAR_SCALE_MIN);
+    return { transform: [{ translateY: -avatarFreed }, { scale }] };
+  });
 
-  // The job title goes first and fastest — it is the one element the native
-  // header drops entirely rather than shrinking.
-  const subtitleStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(scrollY.value, [0, COLLAPSE_RANGE * 0.35], [1, 0], Extrapolation.CLAMP),
-    height: interpolate(
+  // The job title goes first and fastest — the one element the native header
+  // drops entirely rather than shrinking.
+  const subtitleStyle = useAnimatedStyle(() => {
+    const progress = interpolate(
       scrollY.value,
-      [0, COLLAPSE_RANGE * 0.6],
-      [SUBTITLE_HEIGHT, 0],
+      [0, COLLAPSE_RANGE],
+      [0, 1],
       Extrapolation.CLAMP,
-    ),
-  }));
+    );
+    const avatarFreed = AVATAR_MAX * progress * (1 - AVATAR_SCALE_MIN);
+    const nameFreed = NAME_LINE_MAX * progress * (1 - NAME_SCALE_MIN);
+    return {
+      opacity: interpolate(scrollY.value, [0, COLLAPSE_RANGE * 0.35], [1, 0], Extrapolation.CLAMP),
+      transform: [{ translateY: -(avatarFreed + nameFreed) }],
+    };
+  });
 
   // Reaches full opacity before the collapse completes, so the title reads as
   // solid rather than washed out.
@@ -155,7 +171,7 @@ export function UserDetailHeader({
       </View>
 
       <View style={styles.hero} pointerEvents="none">
-        <Animated.View style={avatarStyle}>
+        <Animated.View style={[styles.avatar, avatarStyle]}>
           <Avatar uri={avatarUrl} name={fullName} fill />
         </Animated.View>
 
@@ -199,17 +215,26 @@ const styles = StyleSheet.create({
   hero: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
+    // Anchored to the top so the upward translations do the positioning;
+    // centring would fight them.
+    justifyContent: 'flex-start',
+    paddingTop: spacing.md,
     gap: spacing.xs,
-    paddingBottom: spacing.sm,
+  },
+  avatar: {
+    width: AVATAR_MAX,
+    height: AVATAR_MAX,
+    // Shrink towards the bar rather than about the centre.
+    transformOrigin: 'top center',
   },
   name: {
     ...typography.largeTitle,
     color: colors.textPrimary,
     textAlign: 'center',
     paddingHorizontal: spacing.lg,
+    transformOrigin: 'top center',
   },
-  subtitle: { justifyContent: 'center', overflow: 'hidden' },
+  subtitle: { height: SUBTITLE_HEIGHT, justifyContent: 'center' },
   separator: {
     position: 'absolute',
     left: 0,
