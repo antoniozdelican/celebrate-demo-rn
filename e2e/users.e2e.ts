@@ -8,16 +8,30 @@ const VISIBLE_TIMEOUT_MS = 20_000;
 /**
  * The search field is the platform's native control, and
  * react-native-screens' SearchBarProps exposes no testID — so this is the one
- * place the suite has to match by native type rather than by test id.
+ * place the suite matches by native type rather than by test id.
  *
- * iOS renders a UISearchBar; Android renders the SearchView's inner
- * SearchAutoComplete. If either matcher drifts with a library upgrade, this is
- * the only line to change.
+ * iOS renders a UISearchBar. Android renders react-native-screens'
+ * CustomSearchView, which stays collapsed to a toolbar icon until tapped; its
+ * inner SearchAutoComplete exists in the hierarchy the whole time but is not
+ * visible until then, so it has to be expanded before it can be typed into.
+ *
+ * If either matcher drifts with a library upgrade, these two helpers are the
+ * only places to change.
  */
+const isAndroid = () => device.getPlatform() === 'android';
+
 function searchField() {
-  return device.getPlatform() === 'ios'
-    ? element(by.type('UISearchBar'))
-    : element(by.type('androidx.appcompat.widget.SearchView$SearchAutoComplete'));
+  return isAndroid()
+    ? element(by.type('androidx.appcompat.widget.SearchView$SearchAutoComplete'))
+    : element(by.type('UISearchBar'));
+}
+
+async function openSearch() {
+  if (isAndroid()) {
+    await element(by.type('com.swmansion.rnscreens.CustomSearchView')).tap();
+  } else {
+    await searchField().tap();
+  }
 }
 
 describe('Users directory', () => {
@@ -45,8 +59,7 @@ describe('Users directory', () => {
       .toBeVisible()
       .withTimeout(VISIBLE_TIMEOUT_MS);
 
-    // Android collapses the SearchView to an icon until it is tapped.
-    await searchField().tap();
+    await openSearch();
     await searchField().typeText('Emily');
 
     // Row 1 matches "Emily"; row 2 (Michael Williams) must drop out.
