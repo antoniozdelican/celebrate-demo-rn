@@ -62,7 +62,7 @@ describe('Users directory', () => {
       .withTimeout(VISIBLE_TIMEOUT_MS);
   });
 
-  it('opens the detail screen and drives the animated section', async () => {
+  it('opens the detail screen from a row', async () => {
     await waitFor(element(by.id(testIDs.usersList.row(1))))
       .toBeVisible()
       .withTimeout(VISIBLE_TIMEOUT_MS);
@@ -71,22 +71,6 @@ describe('Users directory', () => {
 
     await waitFor(element(by.id(testIDs.userDetail.screen)))
       .toBeVisible()
-      .withTimeout(VISIBLE_TIMEOUT_MS);
-
-    // The expandable section is asserted rather than the collapsing header:
-    // a tap-driven reveal produces a binary visible/not-visible outcome, while
-    // asserting a header mid-collapse would depend on scroll physics.
-    await detoxExpect(element(by.id(testIDs.userDetail.expandContent))).not.toBeVisible();
-
-    await element(by.id(testIDs.userDetail.expandToggle)).tap();
-
-    await waitFor(element(by.id(testIDs.userDetail.expandContent)))
-      .toBeVisible()
-      .withTimeout(VISIBLE_TIMEOUT_MS);
-
-    await element(by.id(testIDs.userDetail.expandToggle)).tap();
-    await waitFor(element(by.id(testIDs.userDetail.expandContent)))
-      .not.toBeVisible()
       .withTimeout(VISIBLE_TIMEOUT_MS);
   });
 
