@@ -4,12 +4,8 @@ export { Card, type CardProps } from '@/ui/Card';
 export { Input, type InputProps } from '@/ui/Input';
 export { ListItem, type ListItemProps } from '@/ui/ListItem';
 export { Screen, type ScreenProps } from '@/ui/Screen';
-export {
-  EmptyState,
-  ErrorState,
-  LoadingState,
-  type EmptyStateProps,
-  type ErrorStateProps,
-} from '@/ui/StateView';
+export { EmptyState, type EmptyStateProps } from '@/ui/states/EmptyState';
+export { ErrorState, type ErrorStateProps } from '@/ui/states/ErrorState';
+export { LoadingState, type LoadingStateProps } from '@/ui/states/LoadingState';
 export { Text, type TextProps } from '@/ui/Text';
 export { Touchable, type TouchableProps } from '@/ui/Touchable';
