@@ -1,7 +1,7 @@
 import { NavigationContainer } from '@react-navigation/native';
 
-import { RootNavigator } from '@/app/navigation/RootNavigator';
-import { AppProviders } from '@/app/providers/AppProviders';
+import { RootNavigator } from '@/navigation/RootNavigator';
+import { AppProviders } from '@/providers/AppProviders';
 
 export default function App() {
   return (

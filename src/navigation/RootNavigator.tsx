@@ -1,6 +1,6 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-import type { RootStackParamList } from '@/app/navigation/types';
+import type { RootStackParamList } from '@/navigation/types';
 import { UserDetailScreen } from '@/features/users/screens/UserDetailScreen';
 import { UsersListScreen } from '@/features/users/screens/UsersListScreen';
 import { colors, typography } from '@/theme/tokens';

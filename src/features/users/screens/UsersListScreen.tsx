@@ -2,7 +2,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, View, type ListRenderItem } from 'react-native';
 
-import type { RootStackParamList } from '@/app/navigation/types';
+import type { RootStackParamList } from '@/navigation/types';
 import type { UserSummary } from '@/features/users/api/users.types';
 import {
   USER_ROW_HEIGHT,

@@ -2,7 +2,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 
-import type { RootStackParamList } from '@/app/navigation/types';
+import type { RootStackParamList } from '@/navigation/types';
 import { DetailRow } from '@/features/users/components/DetailRow';
 import { UserDetailHeader } from '@/features/users/components/UserDetailHeader';
 import { useUserDetail } from '@/features/users/hooks/useUserDetail';
