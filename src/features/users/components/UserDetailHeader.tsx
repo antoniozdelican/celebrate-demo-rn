@@ -9,15 +9,27 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { testIDs } from '@/lib/testIDs';
-import { colors, spacing } from '@/theme/tokens';
+import { colors, spacing, typography } from '@/theme/tokens';
 import { Avatar } from '@/ui/Avatar';
 import { Text } from '@/ui/Text';
 import { Touchable } from '@/ui/Touchable';
 
-/** Bar height matches UINavigationBar so the collapsed state lines up with it. */
+/** Bar height matches UINavigationBar so the compact title lines up with it. */
 const BAR_HEIGHT = 44;
-export const HEADER_MAX_HEIGHT = 268;
-export const HEADER_MIN_HEIGHT = BAR_HEIGHT;
+
+/**
+ * The header shrinks rather than empties: at rest a large avatar, name and job
+ * title; collapsed, a small avatar and name remain under the bar and only the
+ * job title is dropped. These are the measured endpoints of that transition.
+ */
+const AVATAR_MAX = 96;
+const AVATAR_MIN = 40;
+const NAME_MAX = typography.largeTitle.fontSize;
+const NAME_MIN = 22;
+const SUBTITLE_HEIGHT = typography.heading.lineHeight;
+
+export const HEADER_MAX_HEIGHT = 256;
+export const HEADER_MIN_HEIGHT = 128;
 const COLLAPSE_RANGE = HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT;
 
 export type UserDetailHeaderProps = {
@@ -34,9 +46,12 @@ export type UserDetailHeaderProps = {
 /**
  * Collapsible header.
  *
- * Every interpolation runs inside `useAnimatedStyle`, so the whole collapse is
- * driven on the UI thread and stays smooth regardless of what the JS thread is
- * doing.
+ * Every interpolation runs inside `useAnimatedStyle`, so the collapse is driven
+ * on the UI thread and stays smooth regardless of what JS is doing.
+ *
+ * Avatar and name are animated through their dimensions and font size rather
+ * than a `scale` transform: a transform would leave the original layout box
+ * behind, so the surrounding content could not close up as the header shrinks.
  */
 export function UserDetailHeader({
   scrollY,
@@ -58,12 +73,45 @@ export function UserDetailHeader({
       ) + insets.top,
   }));
 
-  const expandedStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(scrollY.value, [0, COLLAPSE_RANGE * 0.5], [1, 0], Extrapolation.CLAMP),
+  const avatarStyle = useAnimatedStyle(() => {
+    const size = interpolate(
+      scrollY.value,
+      [0, COLLAPSE_RANGE],
+      [AVATAR_MAX, AVATAR_MIN],
+      Extrapolation.CLAMP,
+    );
+    return { width: size, height: size };
+  });
+
+  const nameStyle = useAnimatedStyle(() => ({
+    fontSize: interpolate(
+      scrollY.value,
+      [0, COLLAPSE_RANGE],
+      [NAME_MAX, NAME_MIN],
+      Extrapolation.CLAMP,
+    ),
+    lineHeight: interpolate(
+      scrollY.value,
+      [0, COLLAPSE_RANGE],
+      [typography.largeTitle.lineHeight, 28],
+      Extrapolation.CLAMP,
+    ),
+  }));
+
+  // The job title goes first and fastest — it is the one element the native
+  // header drops entirely rather than shrinking.
+  const subtitleStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(scrollY.value, [0, COLLAPSE_RANGE * 0.35], [1, 0], Extrapolation.CLAMP),
+    height: interpolate(
+      scrollY.value,
+      [0, COLLAPSE_RANGE * 0.6],
+      [SUBTITLE_HEIGHT, 0],
+      Extrapolation.CLAMP,
+    ),
   }));
 
   // Reaches full opacity before the collapse completes, so the title reads as
-  // solid rather than washed out at rest.
+  // solid rather than washed out.
   const compactStyle = useAnimatedStyle(() => ({
     opacity: interpolate(
       scrollY.value,
@@ -73,8 +121,8 @@ export function UserDetailHeader({
     ),
   }));
 
-  // The separator belongs to the scrolled state only, matching how UIKit
-  // switches from scrollEdgeAppearance to standardAppearance.
+  // Belongs to the scrolled state only, matching how UIKit swaps
+  // scrollEdgeAppearance for standardAppearance.
   const separatorStyle = useAnimatedStyle(() => ({
     opacity: interpolate(scrollY.value, [0, 24], [0, 1], Extrapolation.CLAMP),
   }));
@@ -106,15 +154,21 @@ export function UserDetailHeader({
         </Animated.View>
       </View>
 
-      <Animated.View style={[styles.expanded, expandedStyle]} pointerEvents="none">
-        <Avatar uri={avatarUrl} name={fullName} size="xl" />
-        <Text variant="largeTitle" align="center" numberOfLines={1} style={styles.name}>
+      <View style={styles.hero} pointerEvents="none">
+        <Animated.View style={avatarStyle}>
+          <Avatar uri={avatarUrl} name={fullName} fill />
+        </Animated.View>
+
+        <Animated.Text style={[styles.name, nameStyle]} numberOfLines={1}>
           {fullName}
-        </Text>
-        <Text variant="heading" color="textSecondary" align="center" numberOfLines={1}>
-          {headline}
-        </Text>
-      </Animated.View>
+        </Animated.Text>
+
+        <Animated.View style={[styles.subtitle, subtitleStyle]}>
+          <Text variant="heading" color="textSecondary" align="center" numberOfLines={1}>
+            {headline}
+          </Text>
+        </Animated.View>
+      </View>
 
       <Animated.View style={[styles.separator, separatorStyle]} pointerEvents="none" />
     </Animated.View>
@@ -122,10 +176,7 @@ export function UserDetailHeader({
 }
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.background,
-    overflow: 'hidden',
-  },
+  container: { backgroundColor: colors.background, overflow: 'hidden' },
   bar: { height: BAR_HEIGHT, justifyContent: 'center' },
   back: {
     flexDirection: 'row',
@@ -145,15 +196,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: spacing.xxl * 3,
   },
-  expanded: {
+  hero: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.lg,
+    gap: spacing.xs,
+    paddingBottom: spacing.sm,
   },
-  name: { paddingHorizontal: spacing.md },
+  name: {
+    ...typography.largeTitle,
+    color: colors.textPrimary,
+    textAlign: 'center',
+    paddingHorizontal: spacing.lg,
+  },
+  subtitle: { justifyContent: 'center', overflow: 'hidden' },
   separator: {
     position: 'absolute',
     left: 0,

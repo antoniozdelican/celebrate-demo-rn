@@ -12,6 +12,11 @@ export type AvatarProps = {
   /** Used to derive initials when no image is available. */
   name?: string;
   size?: AvatarSize;
+  /**
+   * Fill the parent instead of using a fixed size, so an animated container
+   * can drive the dimensions (the collapsing detail header does this).
+   */
+  fill?: boolean;
   testID?: string;
 };
 
@@ -28,10 +33,12 @@ function initialsOf(name?: string): string {
  * Avatar with an initials fallback. Falls back on both a missing `uri` and a
  * load failure, so a broken remote image never leaves an empty circle.
  */
-export function Avatar({ uri, name, size = 'md', testID }: AvatarProps) {
+export function Avatar({ uri, name, size = 'md', fill = false, testID }: AvatarProps) {
   const [failed, setFailed] = useState(false);
   const dimension = DIMENSIONS[size];
-  const box = { width: dimension, height: dimension, borderRadius: radii.pill };
+  const box = fill
+    ? ({ width: '100%', height: '100%', borderRadius: radii.pill } as const)
+    : { width: dimension, height: dimension, borderRadius: radii.pill };
 
   if (!uri || failed) {
     return (
