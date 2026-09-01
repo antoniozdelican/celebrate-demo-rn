@@ -14,11 +14,9 @@ function fullNameOf(dto: { firstName: string; lastName: string }): string {
 }
 
 export function toUserSummary(dto: UserSummaryDto): UserSummary {
-  // The row's secondary line prefers job title over email: it is the more
-  // meaningful differentiator when scanning a long list.
-  const headline = dto.company?.title
-    ? `${dto.company.title}${dto.company.name ? ` · ${dto.company.name}` : ''}`
-    : dto.email;
+  // Job title alone, matching the native app's single-line secondary text.
+  // Email is the fallback only when no title exists.
+  const headline = dto.company?.title ?? dto.email;
 
   return {
     id: dto.id,

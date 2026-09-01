@@ -1,3 +1,4 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { memo } from 'react';
 import { StyleSheet } from 'react-native';
 
@@ -12,7 +13,7 @@ import { ListItem } from '@/ui/ListItem';
  * measurement while scrolling. The bottom border is inside the box, keeping the
  * rendered height exactly equal to this constant.
  */
-export const USER_ROW_HEIGHT = 72;
+export const USER_ROW_HEIGHT = 76;
 
 export type UserListItemProps = {
   user: UserSummary;
@@ -26,6 +27,9 @@ function UserListItemComponent({ user, onPress }: UserListItemProps) {
       title={user.fullName}
       subtitle={user.headline}
       left={<Avatar uri={user.avatarUrl} name={user.fullName} size="md" />}
+      // Disclosure indicator, matching the platform convention for a row that
+      // pushes a detail screen.
+      right={<Ionicons name="chevron-forward" size={18} color={colors.chevron} />}
       // The id is passed back up rather than closing over a navigation call,
       // so the parent can keep one stable callback for every row.
       onPress={() => onPress(user.id)}

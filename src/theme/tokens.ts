@@ -26,9 +26,11 @@ const palette = {
 } as const;
 
 export const colors = {
-  background: palette.grey50,
+  background: palette.white,
   surface: palette.white,
   surfaceMuted: palette.grey100,
+  /** iOS systemGray6-ish fill used by the search field. */
+  searchField: '#EFEFF0',
   border: palette.grey200,
 
   textPrimary: palette.grey900,
@@ -43,6 +45,7 @@ export const colors = {
   danger: palette.red500,
   dangerMuted: palette.red50,
 
+  chevron: '#C4C4C7',
   skeleton: palette.grey200,
   overlay: 'rgba(0,0,0,0.06)',
 } as const;
@@ -77,6 +80,11 @@ const fontFamily = Platform.select({
   default: { regular: 'sans-serif', medium: 'sans-serif-medium', bold: 'sans-serif' },
 });
 
+/**
+ * Sizes follow the iOS text styles (Title1 / Title3 / Body / Headline /
+ * Subheadline) so rows match the platform's own list metrics rather than
+ * sitting a couple of points small.
+ */
 export const typography = {
   title: {
     fontFamily: fontFamily.bold,
@@ -88,27 +96,33 @@ export const typography = {
   heading: {
     fontFamily: fontFamily.medium,
     fontSize: 20,
-    lineHeight: 26,
+    lineHeight: 25,
     fontWeight: '600',
     letterSpacing: -0.2,
   },
+  /** Body — 17pt, the iOS default reading size. */
   body: {
     fontFamily: fontFamily.regular,
-    fontSize: 16,
+    fontSize: 17,
     lineHeight: 22,
     fontWeight: '400',
+    letterSpacing: -0.4,
   },
+  /** Headline — 17pt semibold. Row titles, buttons. */
   label: {
     fontFamily: fontFamily.medium,
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 17,
+    lineHeight: 22,
     fontWeight: '600',
+    letterSpacing: -0.4,
   },
+  /** Subheadline — 15pt. Row subtitles, secondary text. */
   caption: {
     fontFamily: fontFamily.regular,
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 15,
+    lineHeight: 20,
     fontWeight: '400',
+    letterSpacing: -0.2,
   },
 } as const satisfies Record<string, TextStyle>;
 
