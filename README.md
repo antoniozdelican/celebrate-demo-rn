@@ -122,8 +122,13 @@ booting. Disabling Vulkan took a cold boot from >18 minutes (never completing)
 to ~100 seconds:
 
 ```bash
-emulator -avd <your-avd> -gpu host -feature -Vulkan -no-boot-anim
+emulator -avd <your-avd> -gpu host -feature -Vulkan -no-boot-anim -no-snapshot
 ```
+
+`-no-snapshot` is not optional here. The first boot saves a snapshot recording
+which features were enabled; a later boot tries to restore it, finds Vulkan
+missing, fails with `The snapshot requires the feature: 21`, and hangs — looking
+exactly like the original problem but with a different cause.
 
 Android emulator animations must be off or Detox's idle synchronisation will flake:
 
@@ -153,6 +158,15 @@ to match locally available devices.
 
 `e2e/users.e2e.ts` covers the required flow: launch → list loads → search filters → tap a row →
 detail opens → drive an animated element and assert something observable.
+
+**Verified: 4/4 on both iOS and Android**, using the `*.debug` configurations (which need Metro
+running). The `*.release` configurations are defined and are the better choice for CI, but have
+not been executed here.
+
+Running the suite for the first time found three defects that typechecking and review had not:
+a header title that rendered opaque before Reanimated's first frame and stayed hit-testable and
+VoiceOver-visible while faded; a Gradle task scoped too broadly, colliding on `libfbjni.so`; and
+an Android search field that cannot be matched until its `SearchView` is expanded.
 
 The animation assertion targets the **collapsing header**: the compact title in the bar is not
 visible at rest, and is visible after scrolling. That is an observable, binary outcome rather
