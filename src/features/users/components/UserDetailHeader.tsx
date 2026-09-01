@@ -14,33 +14,20 @@ import { Avatar } from '@/ui/Avatar';
 import { Text } from '@/ui/Text';
 import { Touchable } from '@/ui/Touchable';
 
-/** Bar height matches UINavigationBar so the compact title lines up with it. */
 const BAR_HEIGHT = 44;
 
-/**
- * The header shrinks rather than empties: at rest a large avatar, name and job
- * title; collapsed, a small avatar and name remain under the bar and only the
- * job title is dropped. Endpoints measured from the native recording.
- */
+/** Endpoints measured from the native app: it shrinks, it does not empty. */
 const AVATAR_MAX = 94;
 const AVATAR_MIN = 42;
 const NAME_LINE_MAX = typography.largeTitle.lineHeight;
 const NAME_MIN = 19;
 const SUBTITLE_HEIGHT = typography.body.lineHeight;
 
-/**
- * The avatar does not only shrink — it also rises to sit flush under the bar,
- * from an 18pt gap at rest to roughly 1pt collapsed.
- */
+/** The avatar rises to sit flush under the bar as well as shrinking. */
 const AVATAR_TOP_MAX = 18;
 const AVATAR_TOP_MIN = 1;
 const AVATAR_RISE = AVATAR_TOP_MAX - AVATAR_TOP_MIN;
 
-/**
- * Scale factors, not sizes: the avatar and name are laid out once at full size
- * and animated with `scale`, so no frame triggers a layout pass or makes
- * expo-image resample its bitmap.
- */
 const AVATAR_SCALE_MIN = AVATAR_MIN / AVATAR_MAX;
 const NAME_SCALE_MIN = NAME_MIN / typography.largeTitle.fontSize;
 
@@ -60,14 +47,8 @@ export type UserDetailHeaderProps = {
 };
 
 /**
- * Collapsible header.
- *
- * Every interpolation runs inside `useAnimatedStyle`, so the collapse is driven
- * on the UI thread and stays smooth regardless of what JS is doing.
- *
- * Avatar and name are animated through their dimensions and font size rather
- * than a `scale` transform: a transform would leave the original layout box
- * behind, so the surrounding content could not close up as the header shrinks.
+ * Transforms and opacity only — animating width/height/fontSize forces a layout
+ * pass every frame and makes expo-image resample, which visibly stutters.
  */
 export function UserDetailHeader({
   scrollY,
@@ -89,10 +70,7 @@ export function UserDetailHeader({
       ) + insets.top,
   }));
 
-  /**
-   * `progress` is 0 at rest and 1 fully collapsed. Deriving every style from
-   * it keeps the elements in lockstep.
-   */
+  // progress: 0 at rest, 1 fully collapsed. Every style derives from it.
   const avatarStyle = useAnimatedStyle(() => {
     const progress = interpolate(
       scrollY.value,
@@ -116,14 +94,12 @@ export function UserDetailHeader({
       Extrapolation.CLAMP,
     );
     const scale = 1 - progress * (1 - NAME_SCALE_MIN);
-    // Scaling from the top leaves a gap underneath the avatar; translate up by
-    // exactly the height it gave back so the stack stays tight.
+    // Translate up by exactly the height the avatar gave back.
     const avatarFreed = AVATAR_MAX * progress * (1 - AVATAR_SCALE_MIN) + AVATAR_RISE * progress;
     return { transform: [{ translateY: -avatarFreed }, { scale }] };
   });
 
-  // The job title goes first and fastest — the one element the native header
-  // drops entirely rather than shrinking.
+  // Dropped entirely rather than shrunk, as the native header does.
   const subtitleStyle = useAnimatedStyle(() => {
     const progress = interpolate(
       scrollY.value,
@@ -139,8 +115,7 @@ export function UserDetailHeader({
     };
   });
 
-  // Reaches full opacity before the collapse completes, so the title reads as
-  // solid rather than washed out.
+  // Full opacity before the collapse completes, so it never reads washed out.
   const compactStyle = useAnimatedStyle(() => {
     const opacity = interpolate(
       scrollY.value,
@@ -150,10 +125,7 @@ export function UserDetailHeader({
     );
     return {
       opacity,
-      // Taken out of layout entirely while transparent. A fully faded view is
-      // still hit-testable and still counts as on-screen for accessibility and
-      // for Detox's visibility check, so opacity alone would leave an
-      // invisible title sitting over the bar.
+      // Opacity alone leaves it hit-testable and VoiceOver-visible.
       display: opacity === 0 ? 'none' : 'flex',
     };
   });
@@ -214,12 +186,11 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     paddingRight: spacing.md,
   },
-  // Negative margin pulls the label against the chevron the way UIKit does.
+  // Pulls the label against the chevron the way UIKit does.
   backLabel: { marginLeft: -spacing.xs },
   compact: {
-    // Base opacity 0: the animated style is only applied from Reanimated's
-    // first frame, so without this the title is briefly drawn at full opacity
-    // on mount.
+    // Reanimated only applies its style from the first frame; without this the
+    // title flashes at full opacity on mount.
     opacity: 0,
     position: 'absolute',
     top: 0,
@@ -242,7 +213,6 @@ const styles = StyleSheet.create({
   avatar: {
     width: AVATAR_MAX,
     height: AVATAR_MAX,
-    // Shrink towards the bar rather than about the centre.
     transformOrigin: 'top center',
   },
   name: {

@@ -32,10 +32,7 @@ const MONTHS = [
   'December',
 ] as const;
 
-/**
- * `1996-05-30` -> `30 May 1996`. Done by hand rather than via Intl so the
- * output is identical on both platforms regardless of locale data.
- */
+/** By hand rather than Intl, so both platforms format identically. */
 function formatBirthDate(iso: string | null): string | null {
   if (!iso) return null;
   const [year, month, day] = iso.split('-').map(Number);
@@ -48,7 +45,6 @@ function capitalise(value: string | null): string | null {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
-/** Street, city, state, postcode and country as one readable block. */
 function formatLocation(address: UserDetail['address']): string | null {
   if (!address) return null;
   return [
@@ -66,8 +62,7 @@ export function UserDetailScreen({ route, navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { data: user, isPending, isError, error, refetch } = useUserDetail(userId);
 
-  // Written by the scroll handler on the UI thread and read by the header's
-  // animated styles — the JS thread is never involved in the collapse.
+  // Written on the UI thread; the JS thread is never involved in the collapse.
   const scrollY = useSharedValue(0);
   const onScroll = useAnimatedScrollHandler((event) => {
     scrollY.value = event.contentOffset.y;

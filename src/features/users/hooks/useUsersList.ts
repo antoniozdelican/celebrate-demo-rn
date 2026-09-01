@@ -17,14 +17,9 @@ function getNextSkip(lastPage: UsersPage): number | undefined {
 }
 
 /**
- * Backs the Home list for both browsing and searching.
- *
- * Search is server-side: DummyJSON's /users/search paginates the same way as
- * /users, so both modes share one infinite query and differ only by key and
- * fetcher. Filtering client-side would only ever search the pages already
- * loaded, which silently misrepresents what exists.
- *
- * `query` is expected to already be debounced by the caller.
+ * Browsing and searching share one infinite query, differing only by key and
+ * fetcher — /users and /users/search paginate identically. `query` must
+ * already be debounced by the caller.
  */
 export function useUsersList(query: string) {
   const trimmed = query.trim();

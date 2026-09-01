@@ -12,10 +12,7 @@ export type AvatarProps = {
   /** Used to derive initials when no image is available. */
   name?: string;
   size?: AvatarSize;
-  /**
-   * Fill the parent instead of using a fixed size, so an animated container
-   * can drive the dimensions (the collapsing detail header does this).
-   */
+  /** Let an animated parent drive the size — used by the collapsing header. */
   fill?: boolean;
   testID?: string;
 };
@@ -29,10 +26,7 @@ function initialsOf(name?: string): string {
   return letters.length > 0 ? letters : '?';
 }
 
-/**
- * Avatar with an initials fallback. Falls back on both a missing `uri` and a
- * load failure, so a broken remote image never leaves an empty circle.
- */
+/** Falls back to initials on a missing uri or a failed load. */
 export function Avatar({ uri, name, size = 'md', fill = false, testID }: AvatarProps) {
   const [failed, setFailed] = useState(false);
   const dimension = DIMENSIONS[size];
@@ -57,8 +51,6 @@ export function Avatar({ uri, name, size = 'md', fill = false, testID }: AvatarP
       style={[styles.image, box]}
       contentFit="cover"
       transition={120}
-      // expo-image caches to memory and disk, which matters once the list
-      // recycles rows during fast scrolling.
       cachePolicy="memory-disk"
       onError={() => setFailed(true)}
       accessibilityIgnoresInvertColors

@@ -2,11 +2,7 @@ export const API_BASE_URL = 'https://dummyjson.com';
 
 const DEFAULT_TIMEOUT_MS = 10_000;
 
-/**
- * Errors are modelled as distinct classes rather than status-code checks at
- * call sites, so screens can branch on intent ("not found" vs "offline")
- * without knowing about HTTP.
- */
+/** Distinct classes so screens branch on intent, not on status codes. */
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -17,7 +13,6 @@ export class ApiError extends Error {
     this.name = 'ApiError';
   }
 
-  /** Retrying a 4xx will not help; a 5xx might. */
   get isRetryable(): boolean {
     return this.status >= 500;
   }
@@ -66,7 +61,6 @@ function buildUrl(path: string, query?: Record<string, QueryValue>): string {
 
 export type GetOptions = {
   query?: Record<string, QueryValue>;
-  /** Forwarded by React Query so cancelled queries abort in flight. */
   signal?: AbortSignal;
   timeoutMs?: number;
 };
@@ -119,8 +113,7 @@ export async function apiGet<T>(path: string, options: GetOptions = {}): Promise
       headers: { Accept: 'application/json' },
     });
   } catch (error) {
-    // A caller-initiated cancellation must propagate untouched so React Query
-    // can tell it apart from a genuine failure.
+    // Propagate cancellation untouched so React Query can tell it apart.
     if (signal?.aborted) throw error;
     if (timeoutController.signal.aborted) throw new TimeoutError(url);
     throw new NetworkError(url, error);
@@ -144,7 +137,6 @@ async function readErrorMessage(response: Response): Promise<string> {
       if (typeof message === 'string' && message.length > 0) return message;
     }
   } catch {
-    // Body was not JSON; fall through to the generic message.
   }
   return `Request failed with status ${response.status}`;
 }

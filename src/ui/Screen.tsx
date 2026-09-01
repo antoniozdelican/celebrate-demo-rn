@@ -6,15 +6,11 @@ import { colors } from '@/theme/tokens';
 
 export type ScreenProps = {
   children: ReactNode;
-  /** Which insets to apply. Screens under a native header usually skip 'top'. */
   edges?: readonly Edge[];
   testID?: string;
 };
 
-/**
- * Screen shell. Owns safe-area insets and status bar styling so individual
- * screens never deal with the notch or the Android status bar directly.
- */
+/** Owns safe-area insets and status bar so screens stay platform-agnostic. */
 export function Screen({ children, edges = ['top', 'bottom'], testID }: ScreenProps) {
   return (
     <SafeAreaView testID={testID} style={styles.safe} edges={edges}>

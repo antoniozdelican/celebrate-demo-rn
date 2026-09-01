@@ -2,21 +2,12 @@ import { by, device, element, expect as detoxExpect, waitFor } from 'detox';
 
 import { testIDs } from '@/lib/testIDs';
 
-/** Generous, because a cold list fetch on a slow emulator is not instant. */
 const VISIBLE_TIMEOUT_MS = 20_000;
 
 /**
- * The search field is the platform's native control, and
- * react-native-screens' SearchBarProps exposes no testID — so this is the one
- * place the suite matches by native type rather than by test id.
- *
- * iOS renders a UISearchBar. Android renders react-native-screens'
- * CustomSearchView, which stays collapsed to a toolbar icon until tapped; its
- * inner SearchAutoComplete exists in the hierarchy the whole time but is not
- * visible until then, so it has to be expanded before it can be typed into.
- *
- * If either matcher drifts with a library upgrade, these two helpers are the
- * only places to change.
+ * The only place the suite matches by native type: SearchBarProps exposes no
+ * testID. Android keeps its SearchView collapsed to a toolbar icon, so the
+ * inner field is not visible until it is expanded.
  */
 const isAndroid = () => device.getPlatform() === 'android';
 
@@ -48,7 +39,6 @@ describe('Users directory', () => {
       .toBeVisible()
       .withTimeout(VISIBLE_TIMEOUT_MS);
 
-    // Emily Johnson is id 1 in the DummyJSON dataset, which is deterministic.
     await waitFor(element(by.id(testIDs.usersList.row(1))))
       .toBeVisible()
       .withTimeout(VISIBLE_TIMEOUT_MS);
@@ -97,8 +87,7 @@ describe('Users directory', () => {
       .toBeVisible()
       .withTimeout(VISIBLE_TIMEOUT_MS);
 
-    // The compact title cross-fades in only once the header has collapsed, so
-    // its visibility is an observable proxy for the animation having run.
+    // Visibility of the compact title is the observable proxy for the collapse.
     await detoxExpect(element(by.id(testIDs.userDetail.compactTitle))).not.toBeVisible();
 
     await element(by.id(testIDs.userDetail.scroll)).scroll(300, 'down');

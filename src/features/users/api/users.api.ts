@@ -7,14 +7,10 @@ import type {
 import { toUserDetail, toUsersPage } from '@/features/users/api/users.mappers';
 import { apiGet } from '@/lib/httpClient';
 
-/** Page size. The brief allows 20–50; 30 fills a tall screen without overfetching. */
+/** The brief allows 20–50; 30 fills a tall screen without overfetching. */
 export const PAGE_SIZE = 30;
 
-/**
- * Only the fields the list row renders are requested. The full user payload is
- * roughly 20 fields deep including data we must never display, so trimming it
- * cuts both transfer size and parse cost per page.
- */
+/** Only what the row renders — the full payload is ~20 fields deep. */
 const LIST_FIELDS = 'id,firstName,lastName,email,image,company';
 
 export async function fetchUsers(

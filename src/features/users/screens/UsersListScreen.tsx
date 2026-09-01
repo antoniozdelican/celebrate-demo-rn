@@ -34,25 +34,18 @@ export function UsersListScreen({ navigation }: Props) {
     isFetchingNextPage,
   } = useUsersList(debouncedQuery);
 
-  /**
-   * Search is the platform's own control rather than a text field in the
-   * content area: UISearchController on iOS, androidx SearchView on Android.
-   * That buys the native clear button, Cancel/back handling and accessibility
-   * traits for free, at the cost of a testID — hence the hook-level tests.
-   */
+  // UISearchController on iOS, androidx SearchView on Android — native clear,
+  // Cancel/back handling and a11y traits for free, at the cost of a testID.
   useLayoutEffect(() => {
     navigation.setOptions({
       headerSearchBarOptions: {
         placeholder: 'Search users',
         autoCapitalize: 'none',
         onChangeText: (event) => setQuery(event.nativeEvent.text),
-        // iOS: Cancel wipes the query. Android: the back button collapses the
-        // SearchView and fires onClose, which should do the same.
+        // iOS Cancel and Android's back-collapse both clear.
         onCancelButtonPress: clear,
         onClose: clear,
-        // Equivalent to .navigationBarDrawer(displayMode: .always) — the bar
-        // stays put instead of hiding on scroll, which keeps search reachable
-        // without a large title to tuck under.
+        // .navigationBarDrawer(displayMode: .always) — no large title to hide under.
         hideWhenScrolling: false,
         tintColor: colors.primary,
         textColor: colors.textPrimary,
@@ -62,9 +55,7 @@ export function UsersListScreen({ navigation }: Props) {
     });
   }, [navigation, setQuery, clear]);
 
-  // Pull-to-refresh tracks its own flag rather than reusing `isRefetching`,
-  // which is also true while a next page is loading and would otherwise show
-  // the pull spinner during pagination.
+  // Own flag: `isRefetching` is also true during pagination.
   const [isRefreshing, setIsRefreshing] = useState(false);
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
@@ -75,7 +66,7 @@ export function UsersListScreen({ navigation }: Props) {
     }
   }, [refetch]);
 
-  // Stable across renders so memoised rows are not invalidated every keystroke.
+  // Stable so memoised rows survive every keystroke.
   const handlePressUser = useCallback(
     (userId: number) => navigation.navigate('UserDetail', { userId }),
     [navigation],
@@ -92,7 +83,6 @@ export function UsersListScreen({ navigation }: Props) {
 
   const keyExtractor = useCallback((user: UserSummary) => String(user.id), []);
 
-  // Rows are a fixed height, so offsets can be computed instead of measured.
   const getItemLayout = useCallback(
     (_: ArrayLike<UserSummary> | null | undefined, index: number) => ({
       length: USER_ROW_HEIGHT,
@@ -141,7 +131,6 @@ export function UsersListScreen({ navigation }: Props) {
         // Lets a row tap register while the search keyboard is still open.
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
-        // Insets the list under the native header/search bar on iOS.
         contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={
           users.length === 0 ? styles.emptyContent : { paddingBottom: insets.bottom }

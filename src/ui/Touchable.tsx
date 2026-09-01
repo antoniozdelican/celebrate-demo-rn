@@ -10,17 +10,12 @@ import { colors } from '@/theme/tokens';
 
 export type TouchableProps = Omit<PressableProps, 'style'> & {
   style?: StyleProp<ViewStyle>;
-  /** iOS press feedback. Ignored on Android, which uses ripple. */
   pressedOpacity?: number;
   rippleColor?: string;
-  /** Android ripple that is not clipped to the view bounds (icon buttons). */
   borderlessRipple?: boolean;
 };
 
-/**
- * Press feedback differs per platform: Android uses a ripple, iOS dims.
- * Encapsulating it here means no screen or feature component has to know.
- */
+/** Android ripple vs iOS dim, so no feature component branches on Platform. */
 export function Touchable({
   style,
   pressedOpacity = 0.6,

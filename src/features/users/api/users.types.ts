@@ -1,9 +1,4 @@
-/**
- * Wire types (DTOs) and the domain models the app actually renders.
- *
- * They are kept separate so an API shape change is absorbed by the mappers
- * rather than rippling into components.
- */
+/** DTOs and domain models kept separate so shape changes stop at the mappers. */
 
 export type UserAddressDto = {
   address: string;

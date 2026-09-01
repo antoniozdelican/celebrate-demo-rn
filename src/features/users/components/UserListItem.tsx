@@ -8,11 +8,7 @@ import { colors } from '@/theme/tokens';
 import { Avatar } from '@/ui/Avatar';
 import { ListItem } from '@/ui/ListItem';
 
-/**
- * Fixed row height, so the list can supply `getItemLayout` and skip on-the-fly
- * measurement while scrolling. The bottom border is inside the box, keeping the
- * rendered height exactly equal to this constant.
- */
+/** Fixed so the list can use getItemLayout instead of measuring. */
 export const USER_ROW_HEIGHT = 76;
 
 export type UserListItemProps = {
@@ -27,21 +23,14 @@ function UserListItemComponent({ user, onPress }: UserListItemProps) {
       title={user.fullName}
       subtitle={user.headline}
       left={<Avatar uri={user.avatarUrl} name={user.fullName} size="md" />}
-      // Disclosure indicator, matching the platform convention for a row that
-      // pushes a detail screen.
       right={<Ionicons name="chevron-forward" size={18} color={colors.chevron} />}
-      // The id is passed back up rather than closing over a navigation call,
-      // so the parent can keep one stable callback for every row.
       onPress={() => onPress(user.id)}
       style={styles.row}
     />
   );
 }
 
-/**
- * Memoised: without this every row re-renders on each page append and on every
- * keystroke in the search field.
- */
+/** Memoised: otherwise every row re-renders on each page append. */
 export const UserListItem = memo(UserListItemComponent);
 
 const styles = StyleSheet.create({

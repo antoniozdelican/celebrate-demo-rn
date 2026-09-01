@@ -8,7 +8,6 @@ import { Touchable } from '@/ui/Touchable';
 export type ListItemProps = {
   title: string;
   subtitle?: string;
-  /** Leading slot — typically an Avatar, but deliberately unconstrained. */
   left?: ReactNode;
   right?: ReactNode;
   onPress?: () => void;
@@ -16,10 +15,7 @@ export type ListItemProps = {
   testID?: string;
 };
 
-/**
- * Composable row. It accepts slots rather than an `avatarUrl` prop so it stays
- * usable for rows that are not people.
- */
+/** Slot-based so it composes with anything, not just people. */
 export function ListItem({ title, subtitle, left, right, onPress, style, testID }: ListItemProps) {
   return (
     <Touchable

@@ -9,13 +9,7 @@ export type DetailFieldProps = {
   testID?: string;
 };
 
-/**
- * Label stacked above its value.
- *
- * A side-by-side layout forces long values (an email, a full address) to wrap
- * inside a narrow column and break mid-word; stacking gives them the full
- * width.
- */
+/** Stacked, not side-by-side: long emails and addresses need the full width. */
 export function DetailField({ label, value, testID }: DetailFieldProps) {
   if (value === null || value === undefined || value === '') return null;
 

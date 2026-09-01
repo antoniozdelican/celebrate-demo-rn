@@ -14,8 +14,7 @@ function fullNameOf(dto: { firstName: string; lastName: string }): string {
 }
 
 export function toUserSummary(dto: UserSummaryDto): UserSummary {
-  // Job title alone, matching the native app's single-line secondary text.
-  // Email is the fallback only when no title exists.
+  // Title alone, as the native app shows; email only when there is no title.
   const headline = dto.company?.title ?? dto.email;
 
   return {

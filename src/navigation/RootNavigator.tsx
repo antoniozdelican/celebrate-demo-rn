@@ -11,18 +11,13 @@ export function RootNavigator() {
   return (
     <Stack.Navigator
       screenOptions={{
-        // Deliberately no headerStyle.backgroundColor: setting it makes
-        // react-native-screens configure an opaque appearance, which applies
-        // the same treatment to standardAppearance and scrollEdgeAppearance.
-        // Leaving it to UIKit keeps the bar's own blur behaviour.
-        //
-        // The separator is suppressed in every state to match the detail
-        // header, which has none.
+        // No headerStyle.backgroundColor on purpose: setting it makes
+        // react-native-screens use an opaque appearance for every state,
+        // losing UIKit's own blur behaviour.
         headerShadowVisible: false,
         headerTitleStyle: { ...typography.heading, color: colors.textPrimary },
         headerTintColor: colors.primary,
-        // Android defaults to a left-aligned title; centring both keeps the
-        // two platforms visually comparable.
+        // Android left-aligns by default; centre both to match.
         headerTitleAlign: 'center',
         contentStyle: { backgroundColor: colors.background },
       }}
@@ -31,10 +26,7 @@ export function RootNavigator() {
       <Stack.Screen
         name="UserDetail"
         component={UserDetailScreen}
-        options={{
-          // The custom collapsible header supplies its own title.
-          headerShown: false,
-        }}
+        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   );

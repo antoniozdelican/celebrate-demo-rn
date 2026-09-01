@@ -5,18 +5,12 @@ import { colors, radii, spacing } from '@/theme/tokens';
 import { Text } from '@/ui/Text';
 
 export type DetailSectionProps = {
-  /** Rendered uppercase above the card, as in a grouped UITableView. */
   title: string;
   children: ReactNode;
   testID?: string;
 };
 
-/**
- * A grouped-list section: caption outside, flat tinted card inside.
- *
- * Deliberately no shadow — the platform distinguishes these cards by fill
- * against a white page, not by elevation.
- */
+/** Grouped-list section: caption outside, flat tinted card inside, no shadow. */
 export function DetailSection({ title, children, testID }: DetailSectionProps) {
   return (
     <View testID={testID} style={styles.container}>

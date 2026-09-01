@@ -1,12 +1,8 @@
 import { Platform, type TextStyle, type ViewStyle } from 'react-native';
 
 /**
- * Design tokens.
- *
- * This module is the single source of truth for visual style, and the only
- * place in the app that is allowed to branch on `Platform`. Feature code and
- * screens consume semantic tokens, so iOS/Android differences (shadows vs
- * elevation, default type faces) are resolved once, here.
+ * The only module allowed to branch on `Platform`. Feature code consumes
+ * semantic tokens, so iOS/Android differences are resolved once, here.
  */
 
 const palette = {
@@ -29,9 +25,7 @@ export const colors = {
   background: palette.white,
   surface: palette.white,
   surfaceMuted: palette.grey100,
-  /** iOS systemGray6-ish fill used by the search field. */
   searchField: '#EFEFF0',
-  /** Grouped-list card fill. Flat — the platform uses no shadow here. */
   groupedCard: '#EFEFF0',
   border: palette.grey200,
 
@@ -54,7 +48,6 @@ export const colors = {
 
 export type ColorToken = keyof typeof colors;
 
-/** 4pt spacing scale. */
 export const spacing = {
   xs: 4,
   sm: 8,
@@ -73,22 +66,14 @@ export const radii = {
   pill: 999,
 } as const;
 
-/**
- * Type faces are pinned per platform so the two builds stay visually
- * comparable instead of inheriting San Francisco vs Roboto metrics.
- */
+/** Pinned per platform so the builds don't diverge on SF vs Roboto metrics. */
 const fontFamily = Platform.select({
   ios: { regular: 'System', medium: 'System', bold: 'System' },
   default: { regular: 'sans-serif', medium: 'sans-serif-medium', bold: 'sans-serif' },
 });
 
-/**
- * Sizes follow the iOS text styles (Title1 / Title3 / Body / Headline /
- * Subheadline) so rows match the platform's own list metrics rather than
- * sitting a couple of points small.
- */
+/** Follows the iOS text styles so rows match the platform's list metrics. */
 export const typography = {
-  /** Large Title — 34pt. The detail screen hero name. */
   largeTitle: {
     fontFamily: fontFamily.bold,
     fontSize: 34,
@@ -110,7 +95,6 @@ export const typography = {
     fontWeight: '600',
     letterSpacing: -0.2,
   },
-  /** Body — 17pt, the iOS default reading size. */
   body: {
     fontFamily: fontFamily.regular,
     fontSize: 17,
@@ -118,7 +102,6 @@ export const typography = {
     fontWeight: '400',
     letterSpacing: -0.4,
   },
-  /** Headline — 17pt semibold. Row titles, buttons. */
   label: {
     fontFamily: fontFamily.medium,
     fontSize: 17,
@@ -126,10 +109,6 @@ export const typography = {
     fontWeight: '600',
     letterSpacing: -0.4,
   },
-  /**
-   * Grouped-list section caption — uppercase, tracked out, sat above the card
-   * rather than inside it, matching UITableView's grouped header.
-   */
   sectionHeader: {
     fontFamily: fontFamily.regular,
     fontSize: 13,
@@ -137,7 +116,6 @@ export const typography = {
     fontWeight: '400',
     letterSpacing: 0.6,
   },
-  /** Subheadline — 15pt. Row subtitles, secondary text. */
   caption: {
     fontFamily: fontFamily.regular,
     fontSize: 15,
@@ -149,10 +127,7 @@ export const typography = {
 
 export type TypographyVariant = keyof typeof typography;
 
-/**
- * iOS draws shadows via shadow*, Android via elevation. Components consume
- * `shadow.md` and never branch themselves.
- */
+/** iOS shadow* vs Android elevation, resolved so components never branch. */
 export const shadow = {
   sm: Platform.select<ViewStyle>({
     ios: {
@@ -174,7 +149,6 @@ export const shadow = {
   }),
 } as const;
 
-/** Shared timing so animated surfaces feel consistent across the app. */
 export const motion = {
   fast: 150,
   base: 220,

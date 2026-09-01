@@ -1,11 +1,6 @@
 import { useEffect, useState } from 'react';
 
-/**
- * Returns `value` after it has stayed unchanged for `delayMs`.
- *
- * Generic on purpose — it lives in lib/ rather than the users feature because
- * nothing about it is domain-specific.
- */
+/** Returns `value` once it has stayed unchanged for `delayMs`. */
 export function useDebouncedValue<T>(value: T, delayMs: number): T {
   const [debounced, setDebounced] = useState(value);
 
