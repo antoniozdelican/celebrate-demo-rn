@@ -114,6 +114,17 @@ One-time, per platform:
 npx expo prebuild && cd ios && pod install && cd ..
 ```
 
+### Android emulator
+
+On some hosts — Intel Macs in particular — the emulator selects SwiftShader for
+Vulkan and software-renders the entire guest, so an API 36 image never finishes
+booting. Disabling Vulkan took a cold boot from >18 minutes (never completing)
+to ~100 seconds:
+
+```bash
+emulator -avd <your-avd> -gpu host -feature -Vulkan -no-boot-anim
+```
+
 Android emulator animations must be off or Detox's idle synchronisation will flake:
 
 ```bash
