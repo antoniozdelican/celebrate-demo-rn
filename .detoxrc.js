@@ -29,8 +29,12 @@ module.exports = {
       binaryPath: 'android/app/build/outputs/apk/debug/app-debug.apk',
       testBinaryPath:
         'android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk',
+      // Scoped to :app deliberately. A bare `assembleAndroidTest` builds the
+      // androidTest variant for every module, including third-party libraries,
+      // where gesture-handler and react-android both ship libfbjni.so and the
+      // native-lib merge fails on the duplicate.
       build:
-        'cd android && ./gradlew assembleDebug assembleAndroidTest -DtestBuildType=debug',
+        'cd android && ./gradlew :app:assembleDebug :app:assembleAndroidTest -DtestBuildType=debug',
       reversePorts: [8081],
     },
     'android.release': {
@@ -39,7 +43,7 @@ module.exports = {
       testBinaryPath:
         'android/app/build/outputs/apk/androidTest/release/app-release-androidTest.apk',
       build:
-        'cd android && ./gradlew assembleRelease assembleAndroidTest -DtestBuildType=release',
+        'cd android && ./gradlew :app:assembleRelease :app:assembleAndroidTest -DtestBuildType=release',
     },
   },
   devices: {
