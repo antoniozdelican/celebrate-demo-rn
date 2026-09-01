@@ -13,9 +13,12 @@ export function RootNavigator() {
       screenOptions={{
         // Deliberately no headerStyle.backgroundColor: setting it makes
         // react-native-screens configure an opaque appearance, which applies
-        // the same separator to standardAppearance and scrollEdgeAppearance.
-        // Leaving it to UIKit restores the native behaviour — no hairline at
-        // the top, blur and separator fading in once content scrolls under.
+        // the same treatment to standardAppearance and scrollEdgeAppearance.
+        // Leaving it to UIKit keeps the bar's own blur behaviour.
+        //
+        // The separator is suppressed in every state to match the detail
+        // header, which has none.
+        headerShadowVisible: false,
         headerTitleStyle: { ...typography.heading, color: colors.textPrimary },
         headerTintColor: colors.primary,
         // Android defaults to a left-aligned title; centring both keeps the
