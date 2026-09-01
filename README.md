@@ -159,11 +159,11 @@ src/
   features/
     users/
       api/        endpoints, DTOs, DTO→domain mappers
-      hooks/      useUsersList (list + search), useUserDetail
-      components/ UserListItem, UserSearchBar, UserDetailHeader, DetailRow
+      hooks/      useUsersList (list + search), useUserSearch, useUserDetail
+      components/ UserListItem, UserDetailHeader
       screens/    UsersListScreen, UserDetailScreen
-  ui/             design system — Text, Button, Input, Avatar, Card, ListItem,
-                  Touchable, Screen, ExpandableSection, states/
+  ui/             design system — Text, Button, Touchable, Avatar, ListItem,
+                  Screen, DetailSection, DetailField, states/
   theme/          design tokens
   lib/            httpClient, queryClient, testIDs, useDebouncedValue, listPerformance
   test/           MSW handlers, fixtures, render helper

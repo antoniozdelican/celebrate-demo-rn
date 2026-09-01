@@ -1,6 +1,5 @@
 export { Avatar, type AvatarProps, type AvatarSize } from '@/ui/Avatar';
 export { Button, type ButtonProps, type ButtonSize, type ButtonVariant } from '@/ui/Button';
-export { Card, type CardProps } from '@/ui/Card';
 export { DetailField, type DetailFieldProps } from '@/ui/DetailField';
 export { DetailSection, type DetailSectionProps } from '@/ui/DetailSection';
 export { ListItem, type ListItemProps } from '@/ui/ListItem';
