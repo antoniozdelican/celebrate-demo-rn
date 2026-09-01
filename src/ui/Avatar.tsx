@@ -1,0 +1,69 @@
+import { Image } from 'expo-image';
+import { useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+
+import { colors, radii } from '@/theme/tokens';
+import { Text } from '@/ui/Text';
+
+export type AvatarSize = 'sm' | 'md' | 'lg';
+
+export type AvatarProps = {
+  uri?: string | null;
+  /** Used to derive initials when no image is available. */
+  name?: string;
+  size?: AvatarSize;
+  testID?: string;
+};
+
+const DIMENSIONS: Record<AvatarSize, number> = { sm: 32, md: 48, lg: 88 };
+
+function initialsOf(name?: string): string {
+  if (!name) return '?';
+  const parts = name.trim().split(/\s+/).slice(0, 2);
+  const letters = parts.map((part) => part.charAt(0).toUpperCase()).join('');
+  return letters.length > 0 ? letters : '?';
+}
+
+/**
+ * Avatar with an initials fallback. Falls back on both a missing `uri` and a
+ * load failure, so a broken remote image never leaves an empty circle.
+ */
+export function Avatar({ uri, name, size = 'md', testID }: AvatarProps) {
+  const [failed, setFailed] = useState(false);
+  const dimension = DIMENSIONS[size];
+  const box = { width: dimension, height: dimension, borderRadius: radii.pill };
+
+  if (!uri || failed) {
+    return (
+      <View testID={testID} style={[styles.fallback, box]}>
+        <Text variant={size === 'lg' ? 'heading' : 'label'} color="textSecondary">
+          {initialsOf(name)}
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <Image
+      testID={testID}
+      source={{ uri }}
+      style={[styles.image, box]}
+      contentFit="cover"
+      transition={120}
+      // expo-image caches to memory and disk, which matters once the list
+      // recycles rows during fast scrolling.
+      cachePolicy="memory-disk"
+      onError={() => setFailed(true)}
+      accessibilityIgnoresInvertColors
+    />
+  );
+}
+
+const styles = StyleSheet.create({
+  image: { backgroundColor: colors.surfaceMuted },
+  fallback: {
+    backgroundColor: colors.surfaceMuted,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
