@@ -31,6 +31,8 @@ export const colors = {
   surfaceMuted: palette.grey100,
   /** iOS systemGray6-ish fill used by the search field. */
   searchField: '#EFEFF0',
+  /** Grouped-list card fill. Flat — the platform uses no shadow here. */
+  groupedCard: '#EFEFF0',
   border: palette.grey200,
 
   textPrimary: palette.grey900,
@@ -86,6 +88,14 @@ const fontFamily = Platform.select({
  * sitting a couple of points small.
  */
 export const typography = {
+  /** Large Title — 34pt. The detail screen hero name. */
+  largeTitle: {
+    fontFamily: fontFamily.bold,
+    fontSize: 34,
+    lineHeight: 41,
+    fontWeight: '700',
+    letterSpacing: -0.8,
+  },
   title: {
     fontFamily: fontFamily.bold,
     fontSize: 28,
@@ -115,6 +125,17 @@ export const typography = {
     lineHeight: 22,
     fontWeight: '600',
     letterSpacing: -0.4,
+  },
+  /**
+   * Grouped-list section caption — uppercase, tracked out, sat above the card
+   * rather than inside it, matching UITableView's grouped header.
+   */
+  sectionHeader: {
+    fontFamily: fontFamily.regular,
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '400',
+    letterSpacing: 0.6,
   },
   /** Subheadline — 15pt. Row subtitles, secondary text. */
   caption: {

@@ -5,7 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { colors, radii } from '@/theme/tokens';
 import { Text } from '@/ui/Text';
 
-export type AvatarSize = 'sm' | 'md' | 'lg';
+export type AvatarSize = 'sm' | 'md' | 'lg' | 'xl';
 
 export type AvatarProps = {
   uri?: string | null;
@@ -15,7 +15,7 @@ export type AvatarProps = {
   testID?: string;
 };
 
-const DIMENSIONS: Record<AvatarSize, number> = { sm: 32, md: 48, lg: 88 };
+const DIMENSIONS: Record<AvatarSize, number> = { sm: 32, md: 48, lg: 88, xl: 96 };
 
 function initialsOf(name?: string): string {
   if (!name) return '?';
@@ -36,7 +36,7 @@ export function Avatar({ uri, name, size = 'md', testID }: AvatarProps) {
   if (!uri || failed) {
     return (
       <View testID={testID} style={[styles.fallback, box]}>
-        <Text variant={size === 'lg' ? 'heading' : 'label'} color="textSecondary">
+        <Text variant={size === 'lg' || size === 'xl' ? 'heading' : 'label'} color="textSecondary">
           {initialsOf(name)}
         </Text>
       </View>
