@@ -141,14 +141,22 @@ export function UserDetailHeader({
 
   // Reaches full opacity before the collapse completes, so the title reads as
   // solid rather than washed out.
-  const compactStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(
+  const compactStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(
       scrollY.value,
       [COLLAPSE_RANGE * 0.45, COLLAPSE_RANGE * 0.8],
       [0, 1],
       Extrapolation.CLAMP,
-    ),
-  }));
+    );
+    return {
+      opacity,
+      // Taken out of layout entirely while transparent. A fully faded view is
+      // still hit-testable and still counts as on-screen for accessibility and
+      // for Detox's visibility check, so opacity alone would leave an
+      // invisible title sitting over the bar.
+      display: opacity === 0 ? 'none' : 'flex',
+    };
+  });
 
   return (
     <Animated.View
@@ -209,6 +217,10 @@ const styles = StyleSheet.create({
   // Negative margin pulls the label against the chevron the way UIKit does.
   backLabel: { marginLeft: -spacing.xs },
   compact: {
+    // Base opacity 0: the animated style is only applied from Reanimated's
+    // first frame, so without this the title is briefly drawn at full opacity
+    // on mount.
+    opacity: 0,
     position: 'absolute',
     top: 0,
     left: 0,
