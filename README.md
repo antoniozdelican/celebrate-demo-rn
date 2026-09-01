@@ -201,11 +201,24 @@ loading/error state out of the box. Redux Toolkit or a hand-rolled reducer would
 more code for less behaviour on what is a read-only feed. Query keys live in one `usersKeys`
 factory so cache invalidation has a single vocabulary.
 
-**Search — server-side, debounced 350ms.** DummyJSON's `/users/search` paginates identically to
-`/users`, so one `useInfiniteQuery` serves both modes, differing only by key and fetcher.
-Client-side filtering was rejected: it can only ever search the pages already loaded, which
-silently misrepresents what exists in a 208-record dataset. `keepPreviousData` holds the previous
-results on screen while a new query resolves, so the list never flashes empty between keystrokes.
+**Search — the platform's own control, server-side, debounced 350ms.** Search is declared via
+`headerSearchBarOptions`, which `react-native-screens` implements with `UISearchController` on
+iOS and `androidx` `SearchView` on Android. That yields each platform's native behaviour —
+iOS's Cancel button and clear affordance, Android's collapse-to-icon and back-button dismissal,
+plus correct accessibility traits — rather than a hand-rolled text field that would look
+identical on both and therefore be native to neither.
+
+DummyJSON's `/users/search` paginates identically to `/users`, so one `useInfiniteQuery` serves
+both browsing and searching, differing only by key and fetcher. Client-side filtering was
+rejected: it can only ever search the pages already loaded, which silently misrepresents what
+exists in a 208-record dataset. `keepPreviousData` holds the previous results on screen while a
+new query resolves, so the list never flashes empty between keystrokes.
+
+The cost is testability. `SearchBarProps` exposes no `testID`, so the field is unreachable from
+React Native Testing Library and needs a native-type matcher in Detox. Search behaviour is
+therefore tested at its two real seams — `useUserSearch` for debouncing and `useUsersList` for
+list-vs-search fetching — which isolates the logic better than driving it through screen chrome
+did. `e2e/users.e2e.ts` carries the single platform branch, in one clearly commented helper.
 
 **Navigation carries only an id.** The detail screen fetches by id rather than receiving a list
 summary. That keeps routes serialisable (deep links, state restoration) and guarantees the detail
