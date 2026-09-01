@@ -5,6 +5,21 @@ import { testIDs } from '@/lib/testIDs';
 /** Generous, because a cold list fetch on a slow emulator is not instant. */
 const VISIBLE_TIMEOUT_MS = 20_000;
 
+/**
+ * The search field is the platform's native control, and
+ * react-native-screens' SearchBarProps exposes no testID — so this is the one
+ * place the suite has to match by native type rather than by test id.
+ *
+ * iOS renders a UISearchBar; Android renders the SearchView's inner
+ * SearchAutoComplete. If either matcher drifts with a library upgrade, this is
+ * the only line to change.
+ */
+function searchField() {
+  return device.getPlatform() === 'ios'
+    ? element(by.type('UISearchBar'))
+    : element(by.type('androidx.appcompat.widget.SearchView$SearchAutoComplete'));
+}
+
 describe('Users directory', () => {
   beforeAll(async () => {
     await device.launchApp({ newInstance: true });
@@ -30,7 +45,9 @@ describe('Users directory', () => {
       .toBeVisible()
       .withTimeout(VISIBLE_TIMEOUT_MS);
 
-    await element(by.id(testIDs.usersList.searchInput)).typeText('Emily');
+    // Android collapses the SearchView to an icon until it is tapped.
+    await searchField().tap();
+    await searchField().typeText('Emily');
 
     // Row 1 matches "Emily"; row 2 (Michael Williams) must drop out.
     await waitFor(element(by.id(testIDs.usersList.row(2))))
@@ -38,7 +55,7 @@ describe('Users directory', () => {
       .withTimeout(VISIBLE_TIMEOUT_MS);
     await detoxExpect(element(by.id(testIDs.usersList.row(1)))).toBeVisible();
 
-    await element(by.id(testIDs.usersList.searchClear)).tap();
+    await searchField().clearText();
 
     await waitFor(element(by.id(testIDs.usersList.row(2))))
       .toBeVisible()
