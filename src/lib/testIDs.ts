@@ -29,7 +29,5 @@ export const testIDs = {
     loading: 'user-detail-loading',
     error: 'user-detail-error',
     errorRetry: 'user-detail-error-retry',
-    expandToggle: 'user-detail-expand-toggle',
-    expandContent: 'user-detail-expand-content',
   },
 } as const;

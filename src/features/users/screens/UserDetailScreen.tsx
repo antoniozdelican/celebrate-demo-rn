@@ -1,24 +1,69 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import type { RootStackParamList } from '@/navigation/types';
-import { DetailRow } from '@/features/users/components/DetailRow';
+import type { UserDetail } from '@/features/users/api/users.types';
 import { UserDetailHeader } from '@/features/users/components/UserDetailHeader';
 import { useUserDetail } from '@/features/users/hooks/useUserDetail';
 import { testIDs } from '@/lib/testIDs';
+import type { RootStackParamList } from '@/navigation/types';
 import { spacing } from '@/theme/tokens';
-import { Card } from '@/ui/Card';
-import { ExpandableSection } from '@/ui/ExpandableSection';
+import { DetailField } from '@/ui/DetailField';
+import { DetailSection } from '@/ui/DetailSection';
 import { Screen } from '@/ui/Screen';
 import { ErrorState } from '@/ui/states/ErrorState';
 import { LoadingState } from '@/ui/states/LoadingState';
-import { Text } from '@/ui/Text';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'UserDetail'>;
 
+const MONTHS = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+] as const;
+
+/**
+ * `1996-05-30` -> `30 May 1996`. Done by hand rather than via Intl so the
+ * output is identical on both platforms regardless of locale data.
+ */
+function formatBirthDate(iso: string | null): string | null {
+  if (!iso) return null;
+  const [year, month, day] = iso.split('-').map(Number);
+  if (!year || !month || !day) return null;
+  return `${day} ${MONTHS[month - 1] ?? ''} ${year}`.trim();
+}
+
+function capitalise(value: string | null): string | null {
+  if (!value) return null;
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+/** Street, city, state, postcode and country as one readable block. */
+function formatLocation(address: UserDetail['address']): string | null {
+  if (!address) return null;
+  return [
+    address.street,
+    address.city,
+    `${address.state} ${address.postalCode}`.trim(),
+    address.country,
+  ]
+    .filter((part) => part.length > 0)
+    .join(', ');
+}
+
 export function UserDetailScreen({ route, navigation }: Props) {
   const { userId } = route.params;
+  const insets = useSafeAreaInsets();
   const { data: user, isPending, isError, error, refetch } = useUserDetail(userId);
 
   // Written by the scroll handler on the UI thread and read by the header's
@@ -50,15 +95,16 @@ export function UserDetailScreen({ route, navigation }: Props) {
     );
   }
 
-  const { address, company, physical } = user;
+  const { company, physical } = user;
 
   return (
-    <Screen testID={testIDs.userDetail.screen} edges={['bottom']}>
+    <Screen testID={testIDs.userDetail.screen} edges={[]}>
       <UserDetailHeader
         scrollY={scrollY}
         fullName={user.fullName}
         headline={user.headline}
         avatarUrl={user.avatarUrl}
+        backTitle="Users"
         onBack={navigation.goBack}
       />
 
@@ -66,72 +112,49 @@ export function UserDetailScreen({ route, navigation }: Props) {
         testID={testIDs.userDetail.scroll}
         onScroll={onScroll}
         scrollEventThrottle={16}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xxl }]}
       >
-        <Card style={styles.card}>
-          <Text variant="label" style={styles.cardTitle}>
-            Contact
-          </Text>
-          <DetailRow label="Email" value={user.email} />
-          <DetailRow label="Phone" value={user.phone} />
-          <DetailRow label="Username" value={user.username} />
-        </Card>
-
         {company ? (
-          <Card style={styles.card}>
-            <Text variant="label" style={styles.cardTitle}>
-              Company
-            </Text>
-            <DetailRow label="Name" value={company.name} />
-            <DetailRow label="Title" value={company.title} />
-            <DetailRow label="Department" value={company.department} />
-          </Card>
+          <DetailSection title="Work">
+            <DetailField label="Company" value={company.name} />
+            <DetailField label="Title" value={company.title} />
+            <DetailField label="Department" value={company.department} />
+          </DetailSection>
         ) : null}
 
-        {address ? (
-          <Card style={styles.card}>
-            <Text variant="label" style={styles.cardTitle}>
-              Address
-            </Text>
-            <DetailRow label="Street" value={address.street} />
-            <DetailRow label="City" value={address.city} />
-            <DetailRow label="State" value={`${address.state} ${address.postalCode}`.trim()} />
-            <DetailRow label="Country" value={address.country} />
-          </Card>
+        <DetailSection title="Contact">
+          <DetailField label="Email" value={user.email} />
+          <DetailField label="Phone" value={user.phone} />
+          <DetailField label="Username" value={user.username} />
+        </DetailSection>
+
+        {user.address ? (
+          <DetailSection title="Address">
+            <DetailField label="Location" value={formatLocation(user.address)} />
+          </DetailSection>
         ) : null}
 
-        <Card style={styles.card} padded={false}>
-          <View style={styles.expandable}>
-            <ExpandableSection
-              title="More details"
-              toggleTestID={testIDs.userDetail.expandToggle}
-              contentTestID={testIDs.userDetail.expandContent}
-            >
-              <DetailRow label="Age" value={user.age === null ? null : String(user.age)} />
-              <DetailRow label="Gender" value={user.gender} />
-              <DetailRow label="Birth date" value={user.birthDate} />
-              <DetailRow label="University" value={user.university} />
-              <DetailRow label="Blood group" value={physical.bloodGroup} />
-              <DetailRow
-                label="Height"
-                value={physical.height === null ? null : `${physical.height} cm`}
-              />
-              <DetailRow
-                label="Weight"
-                value={physical.weight === null ? null : `${physical.weight} kg`}
-              />
-              <DetailRow label="Eye color" value={physical.eyeColor} />
-            </ExpandableSection>
-          </View>
-        </Card>
+        <DetailSection title="Personal">
+          <DetailField label="Age" value={user.age === null ? null : String(user.age)} />
+          <DetailField label="Gender" value={capitalise(user.gender)} />
+          <DetailField label="Born" value={formatBirthDate(user.birthDate)} />
+          <DetailField label="University" value={user.university} />
+          <DetailField label="Blood group" value={physical.bloodGroup} />
+          <DetailField
+            label="Height"
+            value={physical.height === null ? null : `${physical.height} cm`}
+          />
+          <DetailField
+            label="Weight"
+            value={physical.weight === null ? null : `${physical.weight} kg`}
+          />
+          <DetailField label="Eye color" value={physical.eyeColor} />
+        </DetailSection>
       </Animated.ScrollView>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  content: { padding: spacing.lg, gap: spacing.lg, paddingBottom: spacing.xxl },
-  card: { gap: spacing.xs },
-  cardTitle: { marginBottom: spacing.xs },
-  expandable: { paddingHorizontal: spacing.lg, paddingBottom: spacing.sm },
+  content: { padding: spacing.lg, gap: spacing.xl },
 });

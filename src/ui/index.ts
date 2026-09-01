@@ -1,7 +1,8 @@
 export { Avatar, type AvatarProps, type AvatarSize } from '@/ui/Avatar';
 export { Button, type ButtonProps, type ButtonSize, type ButtonVariant } from '@/ui/Button';
 export { Card, type CardProps } from '@/ui/Card';
-export { ExpandableSection, type ExpandableSectionProps } from '@/ui/ExpandableSection';
+export { DetailField, type DetailFieldProps } from '@/ui/DetailField';
+export { DetailSection, type DetailSectionProps } from '@/ui/DetailSection';
 export { ListItem, type ListItemProps } from '@/ui/ListItem';
 export { Screen, type ScreenProps } from '@/ui/Screen';
 export { EmptyState, type EmptyStateProps } from '@/ui/states/EmptyState';

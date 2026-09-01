@@ -1,11 +1,12 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   Extrapolation,
   interpolate,
   useAnimatedStyle,
   type SharedValue,
 } from 'react-native-reanimated';
-import { StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { testIDs } from '@/lib/testIDs';
 import { colors, spacing } from '@/theme/tokens';
@@ -13,8 +14,10 @@ import { Avatar } from '@/ui/Avatar';
 import { Text } from '@/ui/Text';
 import { Touchable } from '@/ui/Touchable';
 
-export const HEADER_MAX_HEIGHT = 240;
-export const HEADER_MIN_HEIGHT = 92;
+/** Bar height matches UINavigationBar so the collapsed state lines up with it. */
+const BAR_HEIGHT = 44;
+export const HEADER_MAX_HEIGHT = 268;
+export const HEADER_MIN_HEIGHT = BAR_HEIGHT;
 const COLLAPSE_RANGE = HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT;
 
 export type UserDetailHeaderProps = {
@@ -23,6 +26,8 @@ export type UserDetailHeaderProps = {
   fullName: string;
   headline: string;
   avatarUrl: string;
+  /** Title of the screen being returned to, as iOS labels its back button. */
+  backTitle: string;
   onBack: () => void;
 };
 
@@ -31,13 +36,14 @@ export type UserDetailHeaderProps = {
  *
  * Every interpolation runs inside `useAnimatedStyle`, so the whole collapse is
  * driven on the UI thread and stays smooth regardless of what the JS thread is
- * doing (parsing a freshly fetched page, for instance).
+ * doing.
  */
 export function UserDetailHeader({
   scrollY,
   fullName,
   headline,
   avatarUrl,
+  backTitle,
   onBack,
 }: UserDetailHeaderProps) {
   const insets = useSafeAreaInsets();
@@ -53,26 +59,24 @@ export function UserDetailHeader({
   }));
 
   const expandedStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(scrollY.value, [0, COLLAPSE_RANGE * 0.6], [1, 0], Extrapolation.CLAMP),
-    transform: [
-      {
-        scale: interpolate(
-          scrollY.value,
-          [0, COLLAPSE_RANGE],
-          [1, 0.85],
-          Extrapolation.CLAMP,
-        ),
-      },
-    ],
+    opacity: interpolate(scrollY.value, [0, COLLAPSE_RANGE * 0.5], [1, 0], Extrapolation.CLAMP),
   }));
 
+  // Reaches full opacity before the collapse completes, so the title reads as
+  // solid rather than washed out at rest.
   const compactStyle = useAnimatedStyle(() => ({
     opacity: interpolate(
       scrollY.value,
-      [COLLAPSE_RANGE * 0.65, COLLAPSE_RANGE],
+      [COLLAPSE_RANGE * 0.45, COLLAPSE_RANGE * 0.8],
       [0, 1],
       Extrapolation.CLAMP,
     ),
+  }));
+
+  // The separator belongs to the scrolled state only, matching how UIKit
+  // switches from scrollEdgeAppearance to standardAppearance.
+  const separatorStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(scrollY.value, [0, 24], [0, 1], Extrapolation.CLAMP),
   }));
 
   return (
@@ -86,51 +90,51 @@ export function UserDetailHeader({
           borderlessRipple
           hitSlop={12}
           accessibilityRole="button"
-          accessibilityLabel="Go back"
+          accessibilityLabel={`Back to ${backTitle}`}
           style={styles.back}
         >
-          <Text variant="label" color="primary">
-            ‹ Back
+          <Ionicons name="chevron-back" size={26} color={colors.primary} />
+          <Text variant="body" color="primary" style={styles.backLabel}>
+            {backTitle}
           </Text>
         </Touchable>
 
         <Animated.View style={[styles.compact, compactStyle]} pointerEvents="none">
-          <Text
-            testID={testIDs.userDetail.compactTitle}
-            variant="label"
-            numberOfLines={1}
-          >
+          <Text testID={testIDs.userDetail.compactTitle} variant="label" numberOfLines={1}>
             {fullName}
           </Text>
         </Animated.View>
       </View>
 
       <Animated.View style={[styles.expanded, expandedStyle]} pointerEvents="none">
-        <Avatar uri={avatarUrl} name={fullName} size="lg" />
-        <Text variant="title" align="center" numberOfLines={1}>
+        <Avatar uri={avatarUrl} name={fullName} size="xl" />
+        <Text variant="largeTitle" align="center" numberOfLines={1} style={styles.name}>
           {fullName}
         </Text>
-        <Text variant="caption" color="textSecondary" align="center" numberOfLines={1}>
+        <Text variant="heading" color="textSecondary" align="center" numberOfLines={1}>
           {headline}
         </Text>
       </Animated.View>
+
+      <Animated.View style={[styles.separator, separatorStyle]} pointerEvents="none" />
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.surface,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
+    backgroundColor: colors.background,
     overflow: 'hidden',
   },
-  bar: {
-    height: 44,
-    justifyContent: 'center',
-    paddingHorizontal: spacing.lg,
+  bar: { height: BAR_HEIGHT, justifyContent: 'center' },
+  back: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingRight: spacing.md,
   },
-  back: { alignSelf: 'flex-start' },
+  // Negative margin pulls the label against the chevron the way UIKit does.
+  backLabel: { marginLeft: -spacing.xs },
   compact: {
     position: 'absolute',
     top: 0,
@@ -139,7 +143,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: spacing.xxl * 2,
+    paddingHorizontal: spacing.xxl * 3,
   },
   expanded: {
     flex: 1,
@@ -148,5 +152,14 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     paddingHorizontal: spacing.xl,
     paddingBottom: spacing.lg,
+  },
+  name: { paddingHorizontal: spacing.md },
+  separator: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.border,
   },
 });
