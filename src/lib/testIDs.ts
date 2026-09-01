@@ -9,8 +9,9 @@ export const testIDs = {
   usersList: {
     screen: 'users-list-screen',
     list: 'users-list',
-    searchInput: 'users-search-input',
-    searchClear: 'users-search-clear',
+    // NB: the search field is the platform's native control and has no
+    // testID — react-native-screens' SearchBarProps does not expose one.
+    // E2E matches it by native type instead; see e2e/users.e2e.ts.
     loading: 'users-list-loading',
     error: 'users-list-error',
     errorRetry: 'users-list-error-retry',

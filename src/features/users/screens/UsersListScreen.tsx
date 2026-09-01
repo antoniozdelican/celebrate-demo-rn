@@ -1,36 +1,26 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useCallback, useState } from 'react';
+import { useCallback, useLayoutEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, View, type ListRenderItem } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import type { RootStackParamList } from '@/navigation/types';
 import type { UserSummary } from '@/features/users/api/users.types';
-import {
-  USER_ROW_HEIGHT,
-  UserListItem,
-} from '@/features/users/components/UserListItem';
-import { UserSearchBar } from '@/features/users/components/UserSearchBar';
+import { USER_ROW_HEIGHT, UserListItem } from '@/features/users/components/UserListItem';
+import { useUserSearch } from '@/features/users/hooks/useUserSearch';
 import { useUsersList } from '@/features/users/hooks/useUsersList';
 import { listPerformanceProps } from '@/lib/listPerformance';
 import { testIDs } from '@/lib/testIDs';
-import { useDebouncedValue } from '@/lib/useDebouncedValue';
+import type { RootStackParamList } from '@/navigation/types';
 import { colors, spacing } from '@/theme/tokens';
+import { Screen } from '@/ui/Screen';
 import { EmptyState } from '@/ui/states/EmptyState';
 import { ErrorState } from '@/ui/states/ErrorState';
 import { LoadingState } from '@/ui/states/LoadingState';
-import { Screen } from '@/ui/Screen';
-
-/**
- * Long enough to collapse a burst of typing into one request, short enough to
- * still feel immediate. Tuned against the 350ms rule of thumb for search-as-
- * you-type.
- */
-const SEARCH_DEBOUNCE_MS = 350;
 
 type Props = NativeStackScreenProps<RootStackParamList, 'UsersList'>;
 
 export function UsersListScreen({ navigation }: Props) {
-  const [query, setQuery] = useState('');
-  const debouncedQuery = useDebouncedValue(query, SEARCH_DEBOUNCE_MS);
+  const insets = useSafeAreaInsets();
+  const { setQuery, debouncedQuery, clear } = useUserSearch();
 
   const {
     users,
@@ -43,6 +33,34 @@ export function UsersListScreen({ navigation }: Props) {
     hasNextPage,
     isFetchingNextPage,
   } = useUsersList(debouncedQuery);
+
+  /**
+   * Search is the platform's own control rather than a text field in the
+   * content area: UISearchController on iOS, androidx SearchView on Android.
+   * That buys the native clear button, Cancel/back handling and accessibility
+   * traits for free, at the cost of a testID — hence the hook-level tests.
+   */
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerSearchBarOptions: {
+        placeholder: 'Search users',
+        autoCapitalize: 'none',
+        onChangeText: (event) => setQuery(event.nativeEvent.text),
+        // iOS: Cancel wipes the query. Android: the back button collapses the
+        // SearchView and fires onClose, which should do the same.
+        onCancelButtonPress: clear,
+        onClose: clear,
+        // Equivalent to .navigationBarDrawer(displayMode: .always) — the bar
+        // stays put instead of hiding on scroll, which keeps search reachable
+        // without a large title to tuck under.
+        hideWhenScrolling: false,
+        tintColor: colors.primary,
+        textColor: colors.textPrimary,
+        hintTextColor: colors.textSecondary,
+        headerIconColor: colors.textSecondary,
+      },
+    });
+  }, [navigation, setQuery, clear]);
 
   // Pull-to-refresh tracks its own flag rather than reusing `isRefetching`,
   // which is also true while a next page is loading and would otherwise show
@@ -67,8 +85,6 @@ export function UsersListScreen({ navigation }: Props) {
     if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  const handleClear = useCallback(() => setQuery(''), []);
-
   const renderItem = useCallback<ListRenderItem<UserSummary>>(
     ({ item }) => <UserListItem user={item} onPress={handlePressUser} />,
     [handlePressUser],
@@ -89,55 +105,68 @@ export function UsersListScreen({ navigation }: Props) {
   const showFullScreenError = isError && users.length === 0;
   const showFullScreenLoading = isPending && users.length === 0;
 
-  return (
-    <Screen testID={testIDs.usersList.screen} edges={['bottom']}>
-      <UserSearchBar value={query} onChangeText={setQuery} onClear={handleClear} />
-
-      {showFullScreenLoading ? (
+  if (showFullScreenLoading) {
+    return (
+      <Screen testID={testIDs.usersList.screen} edges={[]}>
         <LoadingState testID={testIDs.usersList.loading} />
-      ) : showFullScreenError ? (
+      </Screen>
+    );
+  }
+
+  if (showFullScreenError) {
+    return (
+      <Screen testID={testIDs.usersList.screen} edges={[]}>
         <ErrorState
           testID={testIDs.usersList.error}
           retryTestID={testIDs.usersList.errorRetry}
           message={error instanceof Error ? error.message : undefined}
           onRetry={() => void refetch()}
         />
-      ) : (
-        <FlatList
-          testID={testIDs.usersList.list}
-          data={users}
-          renderItem={renderItem}
-          keyExtractor={keyExtractor}
-          getItemLayout={getItemLayout}
-          onEndReached={handleEndReached}
-          onEndReachedThreshold={0.5}
-          refreshing={isRefreshing}
-          onRefresh={handleRefresh}
-          // Lets a row tap register while the search keyboard is still open.
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="on-drag"
-          contentContainerStyle={users.length === 0 ? styles.emptyContent : undefined}
-          ListEmptyComponent={
-            <EmptyState
-              testID={testIDs.usersList.empty}
-              title={isSearching ? 'No matches' : 'No users'}
-              message={
-                isSearching
-                  ? `No users match “${debouncedQuery.trim()}”. Try a different name.`
-                  : 'There are no users to show right now.'
-              }
-            />
-          }
-          ListFooterComponent={
-            isFetchingNextPage ? (
-              <View testID={testIDs.usersList.footerLoading} style={styles.footer}>
-                <ActivityIndicator color={colors.primary} />
-              </View>
-            ) : null
-          }
-          {...listPerformanceProps}
-        />
-      )}
+      </Screen>
+    );
+  }
+
+  return (
+    <Screen testID={testIDs.usersList.screen} edges={[]}>
+      <FlatList
+        testID={testIDs.usersList.list}
+        data={users}
+        renderItem={renderItem}
+        keyExtractor={keyExtractor}
+        getItemLayout={getItemLayout}
+        onEndReached={handleEndReached}
+        onEndReachedThreshold={0.5}
+        refreshing={isRefreshing}
+        onRefresh={handleRefresh}
+        // Lets a row tap register while the search keyboard is still open.
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        // Insets the list under the native header/search bar on iOS.
+        contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={
+          users.length === 0 ? styles.emptyContent : { paddingBottom: insets.bottom }
+        }
+        scrollIndicatorInsets={{ bottom: insets.bottom }}
+        ListEmptyComponent={
+          <EmptyState
+            testID={testIDs.usersList.empty}
+            title={isSearching ? 'No matches' : 'No users'}
+            message={
+              isSearching
+                ? `No users match “${debouncedQuery.trim()}”. Try a different name.`
+                : 'There are no users to show right now.'
+            }
+          />
+        }
+        ListFooterComponent={
+          isFetchingNextPage ? (
+            <View testID={testIDs.usersList.footerLoading} style={styles.footer}>
+              <ActivityIndicator color={colors.primary} />
+            </View>
+          ) : null
+        }
+        {...listPerformanceProps}
+      />
     </Screen>
   );
 }
