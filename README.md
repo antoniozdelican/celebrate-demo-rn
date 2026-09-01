@@ -13,7 +13,8 @@ unit/integration tests and Detox E2E coverage on both iOS and Android.
 | Node | 20.19.4+ | Expo SDK 57 minimum |
 | JDK | 17 | Android Gradle builds (`brew install --cask zulu@17`) |
 | Xcode | 16.4 | iOS builds |
-| CocoaPods | 1.13+ | `pod install` for the iOS project |
+| Ruby | 3.x or 4.x | **Not** macOS system Ruby (2.6) — see below |
+| CocoaPods | 1.17+ | `pod install` for the iOS project |
 | Android SDK | platform 36 + build-tools 36.x | plus one emulator AVD |
 | applesimutils | latest | **Detox on iOS only**: `brew tap wix/brew && brew install applesimutils` |
 
@@ -27,14 +28,33 @@ export JAVA_HOME="$(/usr/libexec/java_home -v 17)" && export ANDROID_HOME="$HOME
 
 ## Setup
 
+### Ruby and CocoaPods (iOS only)
+
+macOS ships Ruby 2.6. Expo SDK 57's CocoaPods integration calls `Array#filter_map`,
+added in Ruby 2.7, so `pod install` fails on system Ruby with
+`undefined method 'filter_map'`. On older CocoaPods it fails even earlier, with
+`Unicode Normalization not appropriate for ASCII-8BIT`.
+
+`.ruby-version` pins 4.0.1. With rbenv installed:
+
+```bash
+rbenv install -s "$(cat .ruby-version)" && gem install cocoapods
+```
+
+### Node dependencies
+
 ```bash
 npm install
 ```
 
 > `.npmrc` sets `legacy-peer-deps=true`. `@config-plugins/detox@11` — the latest release — still
 > declares a peer of `expo@^53` while this project runs SDK 57. Its config mods apply cleanly to 57;
-> only the declared range is stale. Because that flag also disables automatic peer installation,
-> `@react-native/jest-preset` is listed as an explicit devDependency.
+> only the declared range is stale.
+>
+> That flag also disables automatic peer installation, so two packages that npm previously pulled
+> in implicitly are now explicit dependencies: `@react-native/jest-preset` (jest-expo's preset) and
+> `react-native-worklets` (Reanimated 4's worklet runtime — without it `RNReanimated.podspec`
+> aborts with "Failed to validate worklets version" and the iOS build cannot configure).
 
 The native `ios/` and `android/` directories are **not** committed — this project uses Expo's
 Continuous Native Generation. Generate them with:
