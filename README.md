@@ -10,9 +10,9 @@ unit/integration tests and Detox E2E coverage on both iOS and Android.
 
 | Tool | Version used | Notes |
 | --- | --- | --- |
-| Node | 20.19.4+ | Expo SDK 57 minimum |
+| Node | 20.19.4+ | Expo SDK 54 minimum |
 | JDK | 17 | Android Gradle builds (`brew install --cask zulu@17`) |
-| Xcode | 16.4 | iOS builds |
+| Xcode | 16.4+ | iOS builds — see *Expo SDK choice* below |
 | Ruby | 3.x or 4.x | **Not** macOS system Ruby (2.6) — see below |
 | CocoaPods | 1.17+ | `pod install` for the iOS project |
 | Android SDK | platform 36 + build-tools 36.x | plus one emulator AVD |
@@ -30,7 +30,7 @@ export JAVA_HOME="$(/usr/libexec/java_home -v 17)" && export ANDROID_HOME="$HOME
 
 ### Ruby and CocoaPods (iOS only)
 
-macOS ships Ruby 2.6. Expo SDK 57's CocoaPods integration calls `Array#filter_map`,
+macOS ships Ruby 2.6. Expo's CocoaPods integration calls `Array#filter_map`,
 added in Ruby 2.7, so `pod install` fails on system Ruby with
 `undefined method 'filter_map'`. On older CocoaPods it fails even earlier, with
 `Unicode Normalization not appropriate for ASCII-8BIT`.
@@ -48,13 +48,12 @@ npm install
 ```
 
 > `.npmrc` sets `legacy-peer-deps=true`. `@config-plugins/detox@11` — the latest release — still
-> declares a peer of `expo@^53` while this project runs SDK 57. Its config mods apply cleanly to 57;
+> declares a peer of `expo@^53` while this project runs SDK 54. Its config mods apply cleanly;
 > only the declared range is stale.
 >
-> That flag also disables automatic peer installation, so two packages that npm previously pulled
-> in implicitly are now explicit dependencies: `@react-native/jest-preset` (jest-expo's preset) and
-> `react-native-worklets` (Reanimated 4's worklet runtime — without it `RNReanimated.podspec`
-> aborts with "Failed to validate worklets version" and the iOS build cannot configure).
+> That flag also disables automatic peer installation, so `react-native-worklets` — Reanimated 4's
+> worklet runtime — is an explicit dependency. Without it `RNReanimated.podspec` aborts with
+> "Failed to validate worklets version" and the iOS build cannot even configure.
 
 The native `ios/` and `android/` directories are **not** committed — this project uses Expo's
 Continuous Native Generation. Generate them with:
@@ -229,6 +228,19 @@ transfer and parse cost. Avatars use `expo-image` with memory+disk caching.
 **Sensitive fields are never mapped.** `/users/{id}` returns `password`, `ssn`, `bank` and
 `crypto`. The mapper does not carry them into the domain model, so they cannot reach the UI by
 accident — even though this is a mock API.
+
+**Expo SDK 54, not the latest.** SDK 57 (RN 0.86) builds `ExpoModulesJSI` through SwiftPM with
+Swift tools 6.2, which ships only with Xcode 26 — and Xcode 26 requires Apple Silicon. On Xcode
+16.4 / Swift 6.1 the iOS build fails at package resolution before compiling a line of app code:
+
+```
+package 'apple' is using Swift tools version 6.2.0 but the installed version is 6.1.0
+```
+
+SDK 54 targets Xcode 16.x and builds cleanly, so the project can be verified on both platforms
+on the machine it was written on rather than assumed to work. The downgrade cost nothing
+architecturally — only `package.json` changed, no application code — and SDK 54 still ships
+Reanimated 4, so the animation approach is unaffected.
 
 **No `babel.config.js`.** Reanimated 4 moved worklets to `react-native-worklets`, and
 `babel-preset-expo` auto-injects that plugin. Adding the old `react-native-reanimated/plugin`
