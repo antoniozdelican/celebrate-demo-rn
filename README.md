@@ -154,10 +154,14 @@ to match locally available devices.
 `e2e/users.e2e.ts` covers the required flow: launch → list loads → search filters → tap a row →
 detail opens → drive an animated element and assert something observable.
 
-The **expand/collapse section** is what the animation assertion targets, not the collapsing
-header. A tap-driven reveal has a binary visible/not-visible outcome; asserting a header
-mid-collapse would depend on scroll physics and produce a flaky test. The collapsing header is
-covered separately by scrolling and asserting the compact title has cross-faded in.
+The animation assertion targets the **collapsing header**: the compact title in the bar is not
+visible at rest, and is visible after scrolling. That is an observable, binary outcome rather
+than a measurement of the animation mid-flight.
+
+An earlier draft asserted a tap-driven expand/collapse disclosure instead, which is inherently
+more deterministic than anything scroll-driven. It was dropped when the detail screen was
+matched to the native app, which has no such disclosure — a deliberate trade of E2E robustness
+for design fidelity.
 
 ---
 
