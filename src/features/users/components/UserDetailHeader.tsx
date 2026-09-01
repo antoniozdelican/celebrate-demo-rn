@@ -22,11 +22,19 @@ const BAR_HEIGHT = 44;
  * title; collapsed, a small avatar and name remain under the bar and only the
  * job title is dropped. Endpoints measured from the native recording.
  */
-const AVATAR_MAX = 96;
-const AVATAR_MIN = 40;
+const AVATAR_MAX = 94;
+const AVATAR_MIN = 42;
 const NAME_LINE_MAX = typography.largeTitle.lineHeight;
-const NAME_MIN = 22;
-const SUBTITLE_HEIGHT = typography.heading.lineHeight;
+const NAME_MIN = 19;
+const SUBTITLE_HEIGHT = typography.body.lineHeight;
+
+/**
+ * The avatar does not only shrink — it also rises to sit flush under the bar,
+ * from an 18pt gap at rest to roughly 1pt collapsed.
+ */
+const AVATAR_TOP_MAX = 18;
+const AVATAR_TOP_MIN = 1;
+const AVATAR_RISE = AVATAR_TOP_MAX - AVATAR_TOP_MIN;
 
 /**
  * Scale factors, not sizes: the avatar and name are laid out once at full size
@@ -36,8 +44,8 @@ const SUBTITLE_HEIGHT = typography.heading.lineHeight;
 const AVATAR_SCALE_MIN = AVATAR_MIN / AVATAR_MAX;
 const NAME_SCALE_MIN = NAME_MIN / typography.largeTitle.fontSize;
 
-export const HEADER_MAX_HEIGHT = 252;
-export const HEADER_MIN_HEIGHT = 128;
+export const HEADER_MAX_HEIGHT = 264;
+export const HEADER_MIN_HEIGHT = 127;
 const COLLAPSE_RANGE = HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT;
 
 export type UserDetailHeaderProps = {
@@ -92,7 +100,12 @@ export function UserDetailHeader({
       [0, 1],
       Extrapolation.CLAMP,
     );
-    return { transform: [{ scale: 1 - progress * (1 - AVATAR_SCALE_MIN) }] };
+    return {
+      transform: [
+        { translateY: -AVATAR_RISE * progress },
+        { scale: 1 - progress * (1 - AVATAR_SCALE_MIN) },
+      ],
+    };
   });
 
   const nameStyle = useAnimatedStyle(() => {
@@ -105,7 +118,7 @@ export function UserDetailHeader({
     const scale = 1 - progress * (1 - NAME_SCALE_MIN);
     // Scaling from the top leaves a gap underneath the avatar; translate up by
     // exactly the height it gave back so the stack stays tight.
-    const avatarFreed = AVATAR_MAX * progress * (1 - AVATAR_SCALE_MIN);
+    const avatarFreed = AVATAR_MAX * progress * (1 - AVATAR_SCALE_MIN) + AVATAR_RISE * progress;
     return { transform: [{ translateY: -avatarFreed }, { scale }] };
   });
 
@@ -118,7 +131,7 @@ export function UserDetailHeader({
       [0, 1],
       Extrapolation.CLAMP,
     );
-    const avatarFreed = AVATAR_MAX * progress * (1 - AVATAR_SCALE_MIN);
+    const avatarFreed = AVATAR_MAX * progress * (1 - AVATAR_SCALE_MIN) + AVATAR_RISE * progress;
     const nameFreed = NAME_LINE_MAX * progress * (1 - NAME_SCALE_MIN);
     return {
       opacity: interpolate(scrollY.value, [0, COLLAPSE_RANGE * 0.35], [1, 0], Extrapolation.CLAMP),
@@ -135,12 +148,6 @@ export function UserDetailHeader({
       [0, 1],
       Extrapolation.CLAMP,
     ),
-  }));
-
-  // Belongs to the scrolled state only, matching how UIKit swaps
-  // scrollEdgeAppearance for standardAppearance.
-  const separatorStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(scrollY.value, [0, 24], [0, 1], Extrapolation.CLAMP),
   }));
 
   return (
@@ -180,13 +187,12 @@ export function UserDetailHeader({
         </Animated.Text>
 
         <Animated.View style={[styles.subtitle, subtitleStyle]}>
-          <Text variant="heading" color="textSecondary" align="center" numberOfLines={1}>
+          <Text variant="body" color="textSecondary" align="center" numberOfLines={1}>
             {headline}
           </Text>
         </Animated.View>
       </View>
 
-      <Animated.View style={[styles.separator, separatorStyle]} pointerEvents="none" />
     </Animated.View>
   );
 }
@@ -218,7 +224,7 @@ const styles = StyleSheet.create({
     // Anchored to the top so the upward translations do the positioning;
     // centring would fight them.
     justifyContent: 'flex-start',
-    paddingTop: spacing.md,
+    paddingTop: AVATAR_TOP_MAX,
     gap: spacing.xs,
   },
   avatar: {
@@ -235,12 +241,4 @@ const styles = StyleSheet.create({
     transformOrigin: 'top center',
   },
   subtitle: { height: SUBTITLE_HEIGHT, justifyContent: 'center' },
-  separator: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: colors.border,
-  },
 });
